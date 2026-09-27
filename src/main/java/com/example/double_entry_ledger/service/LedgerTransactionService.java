@@ -1,4 +1,6 @@
 package com.example.double_entry_ledger.service;
+import com.example.double_entry_ledger.exception.AccountInactiveException;
+import com.example.double_entry_ledger.exception.InvalidTransactionException;
 import com.example.double_entry_ledger.model.Account;
 import com.example.double_entry_ledger.model.EntryType;
 import com.example.double_entry_ledger.model.LedgerEntry;
@@ -23,19 +25,32 @@ public class LedgerTransactionService {
             UUID debitAccountId,
             UUID creditAccountId,
             BigDecimal amount) {
+        if (debitAccountId == null || creditAccountId == null) {
+            throw new InvalidTransactionException(
+                    "Debit and credit accounts are required"
+            );
+        }
         if (debitAccountId.equals(creditAccountId)) {
-            throw new RuntimeException("Debit and credit accounts must be different");
+            throw new InvalidTransactionException(
+                    "Debit and credit accounts must be different"
+            );
         }
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Amount must be greater than zero");
+            throw new InvalidTransactionException(
+                    "Amount must be greater than zero"
+            );
         }
         Account debitAccount = accountService.getAccount(debitAccountId);
         Account creditAccount = accountService.getAccount(creditAccountId);
         if (!debitAccount.isActive()) {
-            throw new RuntimeException("Debit account is inactive");
+            throw new AccountInactiveException(
+                    "Debit account is inactive"
+            );
         }
         if (!creditAccount.isActive()) {
-            throw new RuntimeException("Credit account is inactive");
+            throw new AccountInactiveException(
+                    "Credit account is inactive"
+            );
         }
         LedgerTransaction transaction = new LedgerTransaction();
         LedgerEntry debitEntry = new LedgerEntry(
